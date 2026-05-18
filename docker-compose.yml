@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — persistent order and trade storage
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: lob_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lob}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lob}
+      POSTGRES_DB: ${POSTGRES_DB:-lobdb}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lob} -d ${POSTGRES_DB:-lobdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis — optional pub/sub for external consumers (e.g. a trading dashboard)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: lob_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # LOB Matching Engine — the FastAPI application
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lob_api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lob}:${POSTGRES_PASSWORD:-lob}@postgres:5432/${POSTGRES_DB:-lobdb}
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      DB_ECHO: ${DB_ECHO:-false}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      # Mount source for development hot-reload (remove in production)
+      - .:/app
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+        --log-level ${LOG_LEVEL:-info}
+
+volumes:
+  postgres_data:
+    driver: local

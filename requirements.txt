@@ -1,0 +1,26 @@
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+websockets==13.1
+
+# Data validation
+pydantic==2.10.3
+
+# Database (async PostgreSQL)
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Core data structures
+sortedcontainers==2.4.0
+
+# Redis (optional pub/sub)
+redis[hiredis]==5.2.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx==0.27.2
+
+# Dev utilities
+python-dotenv==1.0.1
