@@ -120,7 +120,7 @@ lob-engine/
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-username/lob-engine.git
+git clone https://github.com/TanishaDutta-106/LOB-Matching-Engine.git
 cd lob-engine
 cp .env.example .env
 # Edit .env if you want custom credentials
@@ -156,6 +156,18 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
+## Live Dashboard
+
+A branded trading dashboard is included at `lob-dashboard.html`.
+
+Open it directly in Chrome while Docker is running — no install needed.
+
+**Features:**
+- Live order book with depth visualization (WebSocket)
+- Real-time trade feed with notional volume tracking
+- Order submission form (limit + market, buy + sell)
+- Order history table with status badges
+- Connects automatically to `localhost:8000`
 
 ## API Reference
 
